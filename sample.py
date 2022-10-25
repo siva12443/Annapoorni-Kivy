@@ -12,18 +12,62 @@ from kivy.clock import Clock
 from kivymd.uix.textfield import MDTextField
 from kivy.lang.builder import Builder
 import cv2
+import mysql.connector
 from kivy.core.window import Window
 from pyzbar.pyzbar import decode
 from kivymd.uix.dialog import MDDialog
 import time
+from collections import OrderedDict
 from kivymd.uix.toolbar import MDTopAppBar
 from kivy.uix.screenmanager import ScreenManager,Screen,FadeTransition
 kivy.require('1.11.1')
 
 Window.size = (300,500)
+
 class ScreenManagement(ScreenManager):
     def __init__(self, **kwargs):
         super(ScreenManagement,self).__init__(**kwargs)
+
+class Db_Operations:
+    def __init__(self):
+        self.mydb = mysql.connector.connect(
+            host='localhost',
+            user='root',
+            passwd='Test123',
+            database='siva'
+        )
+        self.mycursor = self.mydb.cursor()
+
+    def get_userName(self, Name):
+        _users = OrderedDict()
+        _users['name'] = {}
+        _users['number'] = {}
+        _users['password'] = {}
+        # names = []
+        # number = []
+        # passw = []
+        sql = "SELECT * FROM users_table WHERE name = '" + Name + "'"
+        self.mycursor.execute(sql)
+        users = self.mycursor.fetchall()
+        for user in users:
+            global name 
+            name = ""
+            name = f'{name}{user[1]}'
+            global passw
+            passw = ""
+            passw = f'{passw}{user[3]}'
+            # number.append(user[2])
+            # password.append(user[3])
+        # users_length = len(name)
+        # idx = 0
+        # while idx < users_length:
+        #     _users['name'][idx] = name[idx]
+        #     _users['number'][idx] = number[idx]
+        #     _users['password'][idx] = password[idx]
+        #     # _users['passwords'][idx] = passwords[idx]
+        #     # _users['designations'][idx] = designations[idx]
+        #     idx += 1
+        print(_users)
 
 TopAppTool = """
 
@@ -63,6 +107,7 @@ class LoginApp(Screen):
         hint_text = "Password")
        PassTextField.bind(text = self.on_text2)
        LoginButton = MDRaisedButton(pos_hint = {'center_x': 0.5, 'center_y': 0.2}, text = "Submit", halign = "center", on_press = self.OnPressLoginButton)
+       Db_Operations.get_userName
        self.add_widget(TopAppTools)
        self.add_widget(CollegeLogo)
        self.add_widget(NameTextField)
@@ -77,19 +122,20 @@ class LoginApp(Screen):
         password = value
         print(password)
     def OnPressLoginButton(self, *args):
-        if userName == 'siva' and password == '1234':
+        connection = Db_Operations()
+        values = connection.get_userName(userName)
+        if userName == name and password == passw:
             self.manager.current = "second"
         else:
-            self.dialog = MDDialog(
-                text="Invalid Credentials",
+               self.dialog = MDDialog(
+                text="Invalid UserName or Password",
                 buttons=[
                     MDFlatButton(
                         text="Ok",
                         on_press = self.MoveFirstScreen
                     ),
-                ],
-            )
-            self.dialog.open()
+                ],)
+               self.dialog.open()
     def MoveFirstScreen(self, *args):
         self.dialog.dismiss(force=True)
 
