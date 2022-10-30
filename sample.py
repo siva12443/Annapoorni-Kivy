@@ -43,9 +43,6 @@ class Db_Operations:
         _users['name'] = {}
         _users['number'] = {}
         _users['password'] = {}
-        # names = []
-        # number = []
-        # passw = []
         sql = "SELECT * FROM users_table WHERE name = '" + Name + "'"
         self.mycursor.execute(sql)
         users = self.mycursor.fetchall()
@@ -56,18 +53,22 @@ class Db_Operations:
             global passw
             passw = ""
             passw = f'{passw}{user[3]}'
-            # number.append(user[2])
-            # password.append(user[3])
-        # users_length = len(name)
-        # idx = 0
-        # while idx < users_length:
-        #     _users['name'][idx] = name[idx]
-        #     _users['number'][idx] = number[idx]
-        #     _users['password'][idx] = password[idx]
-        #     # _users['passwords'][idx] = passwords[idx]
-        #     # _users['designations'][idx] = designations[idx]
-        #     idx += 1
-        print(_users)
+    
+    def get_studentDetails(self):
+        _student = OrderedDict()
+        _student['studRoll'] = {}
+        global studRoll
+        studRoll = []
+        sql = "SELECT * FROM student_table"
+        self.mycursor.execute(sql)
+        students = self.mycursor.fetchall()
+        for student in students:
+            studRoll.append(student[2])
+        users_length = len(studRoll)
+        idx = 0
+        while idx < users_length:
+            _student['studRoll'][idx] = studRoll[idx]
+            idx += 1
 
 TopAppTool = """
 
@@ -116,11 +117,9 @@ class LoginApp(Screen):
     def on_text(self, instance, value):
         global userName
         userName = value
-        print(userName)
     def on_text2(self, instance, value):
         global password
         password = value
-        print(password)
     def OnPressLoginButton(self, *args):
         connection = Db_Operations()
         values = connection.get_userName(userName)
@@ -163,8 +162,21 @@ class QrScanner(Screen):
         for code in decode(frame):
             print(code.data.decode('utf-8'))
             time.sleep(5)
-            if code.data.decode('utf-8') != 'WARNING: .\zbar\decoder\pdf417.c:89: <unknown>: Assertion "g[0] >= 0 && g[1] >= 0 && g[2] >= 0" failed.dir=1 sig=6a00 k=6 g0=a87 g1=f23 g2=ffffffff buf[0000]=':
+            connections = Db_Operations()
+            values = connections.get_studentDetails()
+            if code.data.decode('utf-8') in studRoll:
                 self.manager.current = "third"
+                
+            # else:
+            #    self.dialog = MDDialog(
+            #     text="Invalid QR",
+            #     buttons=[
+            #         MDFlatButton(
+            #             text="Ok",
+            #             on_press = self.dialog.dismiss(force=True)
+            #         ),
+            #     ],)
+            #    self.dialog.open()
         self.image_frame=frame
         buffer=cv2.flip(frame,0).tobytes()
         texture=Texture.create(size=(frame.shape[1],frame.shape[0]), colorfmt='bgr')
