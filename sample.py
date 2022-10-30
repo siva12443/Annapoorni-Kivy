@@ -1,3 +1,4 @@
+from cv2 import idft
 import kivy
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import MDBoxLayout
@@ -161,28 +162,31 @@ class QrScanner(Screen):
         ret,frame=self.capture.read()
         for code in decode(frame):
             print(code.data.decode('utf-8'))
-            time.sleep(5)
+            time.sleep(0.5)
             connections = Db_Operations()
             values = connections.get_studentDetails()
             if code.data.decode('utf-8') in studRoll:
                 self.manager.current = "third"
                 
-            # else:
-            #    self.dialog = MDDialog(
-            #     text="Invalid QR",
-            #     buttons=[
-            #         MDFlatButton(
-            #             text="Ok",
-            #             on_press = self.dialog.dismiss(force=True)
-            #         ),
-            #     ],)
-            #    self.dialog.open()
+            else:
+               self.dialog = MDDialog(
+                text="Invalid QR",
+                buttons=[
+                    MDFlatButton(
+                        text="Ok",
+                        on_press = self.RemainSameScreen
+                    ),
+                ],)
+               self.dialog.open()
         self.image_frame=frame
         buffer=cv2.flip(frame,0).tobytes()
         texture=Texture.create(size=(frame.shape[1],frame.shape[0]), colorfmt='bgr')
         texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
         self.image.texture = texture
     
+    def RemainSameScreen(self, *args):
+        self.dialog.dismiss(force=True)
+
     def MovetoFourScreen(self, *args):
         self.manager.current = "fourth"
 
@@ -205,7 +209,6 @@ MDBoxLayout:
 class DetailsScreen(Screen):        
     def __init__(self, **kwargs):
         super(DetailsScreen,self).__init__(**kwargs)    
-		
 		#Adding widgets
         TopTools = Builder.load_string(TopTool)
         Name_Label = MDLabel(text = "Name: Stud_Name", font_size = 14, halign = "center", pos_hint = {'center_x' : 0.5, 'center_y' : 0.7}, theme_text_color = "Custom",text_color = (1,0.5,0,1))
