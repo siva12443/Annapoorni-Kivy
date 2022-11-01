@@ -1,3 +1,4 @@
+from glob import glob
 from cv2 import idft
 import kivy
 from kivymd.app import MDApp
@@ -38,6 +39,7 @@ class Db_Operations:
             database='siva'
         )
         self.mycursor = self.mydb.cursor()
+        self.studRoll = ""
 
     def get_userName(self, Name):
         _users = OrderedDict()
@@ -58,18 +60,37 @@ class Db_Operations:
     def get_studentDetails(self):
         _student = OrderedDict()
         _student['studRoll'] = {}
-        global studRoll
-        studRoll = []
+        global studRolls
+        studRolls = []
         sql = "SELECT * FROM student_table"
         self.mycursor.execute(sql)
         students = self.mycursor.fetchall()
         for student in students:
-            studRoll.append(student[2])
-        users_length = len(studRoll)
+            studRolls.append(student[2])
+        users_length = len(studRolls)
         idx = 0
         while idx < users_length:
-            _student['studRoll'][idx] = studRoll[idx]
+            _student['studRoll'][idx] = studRolls[idx]
             idx += 1
+    
+    def set_rollno(self, rollno):
+        self.studRoll = rollno
+        print("Roll Number: "+ self.studRoll)
+        _stud = OrderedDict()
+        _stud['studName'] = {}
+        global studRoll
+        studRoll = ''
+        studRoll = self.studRoll
+        global studName
+        studName = ''
+        sql = "SELECT * FROM student_table WHERE studRoll = '" +  studRoll + "'"
+        self.mycursor.execute(sql)
+        studs = self.mycursor.fetchall()
+        for stud in studs:
+            studName = f'{studName}{stud[1]}'
+        print("N: "+studName)
+        print("N: " + studRoll)
+        
 
 TopAppTool = """
 
@@ -165,9 +186,11 @@ class QrScanner(Screen):
             time.sleep(0.5)
             connections = Db_Operations()
             values = connections.get_studentDetails()
-            if code.data.decode('utf-8') in studRoll:
+            if code.data.decode('utf-8') in studRolls:
+                global studentRollnumber
+                studentRollnumber = code.data.decode('utf-8')
+                val = connections.set_rollno(studentRollnumber)
                 self.manager.current = "third"
-                
             else:
                self.dialog = MDDialog(
                 text="Invalid QR",
@@ -208,11 +231,11 @@ MDBoxLayout:
 
 class DetailsScreen(Screen):        
     def __init__(self, **kwargs):
-        super(DetailsScreen,self).__init__(**kwargs)    
+        super(DetailsScreen,self).__init__(**kwargs) 
 		#Adding widgets
         TopTools = Builder.load_string(TopTool)
         Name_Label = MDLabel(text = "Name: Stud_Name", font_size = 14, halign = "center", pos_hint = {'center_x' : 0.5, 'center_y' : 0.7}, theme_text_color = "Custom",text_color = (1,0.5,0,1))
-        Roll_Label = MDLabel(text = "Roll No: Stud_Roll", font_size = 14, halign = "center", pos_hint = {'center_x' : 0.5, 'center_y' : 0.6}, theme_text_color = "Custom",text_color = (1,0.5,0,1))
+        Roll_Label = MDLabel( text = "studentRollnumber" , font_size = 14, halign = "center", pos_hint = {'center_x' : 0.5, 'center_y' : 0.6}, theme_text_color = "Custom",text_color = (1,0.5,0,1))
         Choose_Label = MDLabel(text = "Choose the food type", font_size = 18, halign = "center", pos_hint = {'center_x' : 0.5, 'center_y' : 0.4}, bold = True)
         Snack_Button = MDFillRoundFlatIconButton(icon = "coffee-outline", text = "Snack", halign = "center", pos_hint = {'center_x' : 0.5, 'center_y' : 0.3})
         Lunch_Button = MDFillRoundFlatIconButton(icon = "bowl-mix", text = "Lunch", halign = "center", pos_hint = {'center_x' : 0.5, 'center_y' : 0.2})
